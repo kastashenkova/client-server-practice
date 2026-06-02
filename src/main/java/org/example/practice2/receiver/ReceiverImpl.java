@@ -1,10 +1,6 @@
 package org.example.practice2.receiver;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.Random;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import org.example.practice1.Encrypter;
 import org.example.practice1.Message;
@@ -69,19 +65,10 @@ public class ReceiverImpl implements Receiver {
 
     @Override
     public void run() {
-        int port = 8080;
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            while (active) {
-                var clientSession = serverSocket.accept();
-
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Could not listen on port: " + port, e);
-        }
         while (active && !Thread.currentThread().isInterrupted()) {
             receiveMessage();
             try {
-                Thread.sleep(50); // network delay
+                Thread.sleep(50);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -95,36 +82,3 @@ public class ReceiverImpl implements Receiver {
     }
 }
 
-class SockerWrapper {
-    public final Socket socket;
-    private final BlockingQueue<byte[]> outputQueue;
-
-    public SockerWrapper(Socket socket, BlockingQueue<byte[]> outputQueue) {
-        this.socket = socket;
-        this.outputQueue = outputQueue;
-    }
-
-    public void sendPackage(byte[] p) {
-        try  {
-            var output = socket.getOutputStream();
-            output.write(p);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to send package: " + p, e);
-        }
-    }
-
-    public void read() {
-        while (true) {
-            try {
-                var input = socket.getInputStream();
-                var available = input.available();
-                outputQueue.put(input.readAllBytes());
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to read package: " + e.getMessage(), e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-        }
-    }
-}
