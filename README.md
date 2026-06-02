@@ -20,3 +20,6 @@
 <img width="514" height="186" alt="image" src="https://github.com/user-attachments/assets/30778592-719d-44ab-b273-ae4bd837c853" />
 
 > made with [Jacoco](https://www.eclemma.org/jacoco/)
+
+## 📌 Practice 3. Networking
+Added classes `StoreServerTCP`, `StoreClientTCP`, `StoreServerUDP` and `StoreClientUDP`
