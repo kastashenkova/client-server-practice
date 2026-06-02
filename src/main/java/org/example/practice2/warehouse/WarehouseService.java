@@ -3,7 +3,6 @@ package org.example.practice2.warehouse;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class WarehouseService {
     private final HashMap<String, Integer> quantities = new HashMap<>();
