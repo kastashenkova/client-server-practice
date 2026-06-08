@@ -23,3 +23,15 @@
 
 ## 📌 Practice 3. Networking
 Added classes `StoreServerTCP`, `StoreClientTCP`, `StoreServerUDP` and `StoreClientUDP`
+
+## 📌 Practice 4. Database
+Product operations implementation:
+- create
+- getAll (with filters and pagination)
+- getById
+- update
+- deleteAll
+- deleteById
+- count
+  
+### Test coverage
