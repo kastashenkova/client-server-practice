@@ -10,7 +10,11 @@ public class Product {
     private int quantity;
     private BigDecimal price;
 
-    public Product(int id, String name, String category, int quantity, BigDecimal price) {
+    public Product(String name, String category, int quantity, BigDecimal price) {
+        this(null, name, category, quantity, price);
+    }
+
+    public Product(Integer id, String name, String category, int quantity, BigDecimal price) {
         this.id = id;
         this.name = name;
         this.category = category;
