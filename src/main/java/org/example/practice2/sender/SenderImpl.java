@@ -55,6 +55,8 @@ public class SenderImpl implements Sender, Runnable {
 
                 if (data == null) continue;
 
+                System.out.println("[SEND] " + data.length + " bytes");
+
                 sendMessage(data, null);
 
             } catch (InterruptedException e) {

@@ -120,23 +120,19 @@ class MultithreadMessageSendingTest {
         pool.shutdown();
 
         WarehouseService warehouse = scaling.getWarehouseService();
-        int last = 0;
-        int sameCount = 0;
-
-        while (sameCount < 5) {
-            int current = warehouse.getStock("pasta");
-
-            if (current == last) {
-                sameCount++;
-            } else {
-                sameCount = 0;
-                last = current;
-            }
-
-            Thread.sleep(50);
-        }
 
         int expected = threadCount * messagesPerThread * 10; // 500
+        int current = 0;
+        int maxRetries = 100; // 5 sec
+
+        while (maxRetries > 0) {
+            current = warehouse.getStock("pasta");
+            if (current == expected) {
+                break;
+            }
+            Thread.sleep(50);
+            maxRetries--;
+        }
         assertEquals(expected, warehouse.getStock("pasta"),
                 "All ADD_PRODUCTS commands must be processed exactly once");
     }
@@ -190,18 +186,25 @@ class MultithreadMessageSendingTest {
             sendQueue.produce(new byte[]{1, 2, 3}); // 3 bytes
             sendQueue.produce(new byte[]{4, 5, 6, 7, 8}); // 5 bytes
 
-            Thread.sleep(200);
+            int maxRetries = 40;
+            while (maxRetries > 0) {
+                String consoleOutput = outContent.toString();
+                if (consoleOutput.contains("[SEND] 3 bytes") && consoleOutput.contains("[SEND] 5 bytes")) {
+                    break;
+                }
+                Thread.sleep(50);
+                maxRetries--;
+            }
 
             String consoleOutput = outContent.toString();
-
             assertTrue(consoleOutput.contains("[SEND] 3 bytes"));
             assertTrue(consoleOutput.contains("[SEND] 5 bytes"));
 
         } finally {
+            System.setOut(originalOut);
             sender.stop();
             senderThread.interrupt();
             senderThread.join(1000);
-            System.setOut(originalOut);
         }
     }
 }

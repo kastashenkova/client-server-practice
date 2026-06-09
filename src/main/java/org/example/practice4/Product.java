@@ -66,7 +66,11 @@ public class Product {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Product product = (Product) o;
-        return quantity == product.quantity && Objects.equals(price, product.price) && Objects.equals(id, product.id) && Objects.equals(name, product.name) && Objects.equals(category, product.category);
+        return quantity == product.quantity
+                && Objects.equals(id, product.id)
+                && Objects.equals(name, product.name)
+                && (price != null && product.price != null ?
+                price.compareTo(product.price) == 0 : price == product.price);
     }
 
     @Override

@@ -13,18 +13,19 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-// using SqlLite
-public class DatabaseImpl implements Database, AutoCloseable {
+public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
 
     private final Connection connection;
 
-    public DatabaseImpl(String dbName) {
+    public SqlLiteDatabaseImpl(String dbName) {
         try {
+            Class.forName("org.sqlite.JDBC");
             this.connection = DriverManager.getConnection("jdbc:sqlite:" + dbName);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("SQLite JDBC driver not found", e);
         } catch (SQLException e) {
             throw new RuntimeException("Can't create SQLite DB", e);
         }
-
         init();
     }
 
@@ -40,7 +41,7 @@ public class DatabaseImpl implements Database, AutoCloseable {
 
             int inserted = ps.executeUpdate();
             if (inserted < 1) {
-                throw new RuntimeException("Failed to insert product: " + product.getName());
+                throw new RuntimeException("Failed to create product: " + product.getName());
             }
 
             try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
@@ -52,7 +53,7 @@ public class DatabaseImpl implements Database, AutoCloseable {
             throw new RuntimeException(
                     "Failed to obtain generated id for product: " + product.getName());
         } catch (SQLException e) {
-            throw new RuntimeException("Can't insert product: " + product, e);
+            throw new RuntimeException("Can't create product: " + product, e);
         }
     }
 
@@ -261,10 +262,5 @@ public class DatabaseImpl implements Database, AutoCloseable {
 //        params.addAll(values);
 //        return columnName + " IN(" + values.stream().map(i -> "?").collect(Collectors.joining(",")) + ")";
 //    }
-}
-
-class SqlWrapper {
-    public String sql;
-    public List<Object> params = new ArrayList<>();
 }
 
