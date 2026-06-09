@@ -1,8 +1,11 @@
 package org.example.practice2;
 
 import org.example.practice2.warehouse.WarehouseService;
+import org.example.practice4.Filter;
+import org.example.practice4.Product;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class Main {
 
@@ -20,6 +23,24 @@ public class Main {
             int stock = warehouse.getStock(product);
             BigDecimal price = warehouse.getPrice(product);
             System.out.println("Product: " + product + ", left: " + stock + ", current price: " + price);
+        }
+
+        Filter filter = new Filter();
+        filter.minQuantity = 100;
+        filter.maxPrice = new BigDecimal("50.00");
+        filter.limit = 3;
+
+        List<Product> searchResults = warehouse.searchProducts(filter);
+
+        if (searchResults.isEmpty()) {
+            System.out.println("No products found for filter");
+        } else {
+            for (Product p : searchResults) {
+                System.out.println("For filter found product: " + p.getName()
+                        + ", left: " + p.getQuantity()
+                        + ", current price: " + p.getPrice());
+
+            }
         }
 
         scaling.stop();

@@ -1,7 +1,10 @@
 package org.example.practice2.warehouse;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
+
+import org.example.practice4.Filter;
 import org.example.practice4.Product;
 import org.example.practice4.SqlLiteDatabaseImpl;
 
@@ -77,9 +80,20 @@ public class WarehouseService {
     }
 
     public synchronized BigDecimal getPrice(String productName) {
-        return BigDecimal.valueOf(
-                database.getProductByName(productName)
-                .map(p -> p.getPrice().doubleValue())
-                .orElse(0.0));
+        return database.getProductByName(productName)
+                .map(Product::getPrice)
+                .orElse(BigDecimal.ZERO);
+    }
+
+    public synchronized boolean deleteProduct(int id) {
+        try {
+            return database.deleteById(id) > 0;
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    public synchronized List<Product> searchProducts(Filter filter) {
+        return database.getAll(filter);
     }
 }

@@ -5,6 +5,12 @@ import org.example.practice2.SharedQueue;
 import org.example.practice2.warehouse.CommandResult;
 import org.example.practice2.warehouse.WarehouseCommand;
 import org.example.practice2.warehouse.WarehouseService;
+import org.example.practice4.Filter;
+import org.example.practice4.Product;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Processor implements Runnable {
     private final SharedQueue<Message> inputQueue;
@@ -76,6 +82,40 @@ public class Processor implements Runnable {
                     double price = Double.parseDouble(command.params()[1]);
                     warehouseService.setPrice(command.params()[0], price);
                     yield CommandResult.success("New " + command.params()[0] + " price = " + price);
+                }
+                case SEARCH_PRODUCTS -> {
+                    Filter filter = new Filter();
+                    for (String param : command.params()) {
+                        String[] parts = param.split(":");
+                        if (parts.length == 2) {
+                            switch (parts[0]) {
+                                case "name" -> filter.name = parts[1];
+                                case "minPrice" -> filter.minPrice = new BigDecimal(parts[1]);
+                                case "maxPrice" -> filter.maxPrice = new BigDecimal(parts[1]);
+                                case "minQuantity" -> filter.minQuantity = Integer.parseInt(parts[1]);
+                                case "maxQuantity" -> filter.maxQuantity = Integer.parseInt(parts[1]);
+                                case "limit" -> filter.limit = Integer.parseInt(parts[1]);
+                            }
+                        }
+                    }
+
+                    List<Product> products = warehouseService.searchProducts(filter);
+                    String resultList = products.stream()
+                            .map(p -> p.getName() + "(ID:" + p.getId() + ")")
+                            .collect(Collectors.joining(", "));
+
+                    yield CommandResult.success("Found products: " + (resultList.isEmpty() ? "none" : resultList));
+                }
+
+                case DELETE_PRODUCT -> {
+                    int id = Integer.parseInt(command.params()[0]);
+                    boolean deleted = warehouseService.deleteProduct(id);
+
+                    if (deleted) {
+                        yield CommandResult.success("Deleted product with ID: " + id);
+                    } else {
+                        yield CommandResult.error("Product not found with ID: " + id);
+                    }
                 }
             };
         } catch (Exception e) {

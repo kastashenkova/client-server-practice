@@ -60,6 +60,8 @@ public class ReceiverImpl implements Receiver {
             case ADD_GROUP -> group;
             case ADD_PRODUCT_NAME_TO_GROUP -> group + ":" + product;
             case SET_PRODUCT_PRICE -> product + ":" + price;
+            case SEARCH_PRODUCTS -> "name:" + product;
+            case DELETE_PRODUCT -> String.valueOf(random.nextInt(20) + 1);
         };
     }
 
