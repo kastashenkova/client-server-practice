@@ -123,4 +123,54 @@ class MySqlDatabaseTest extends BaseMySqlTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("not found");
     }
+
+    @Test
+    void shouldFilterProductsByQuantityRange() {
+        Filter filter = new Filter();
+        filter.minQuantity = 2;
+        filter.maxQuantity = 3;
+
+        List<Product> products = database.getAll(filter);
+
+        assertThat(products)
+                .hasSize(2)
+                .extracting(Product::getName)
+                .containsExactlyInAnyOrder("product2", "product3");
+    }
+
+    @Test
+    void shouldFilterProductsByPriceRange() {
+        Filter filter = new Filter();
+        filter.minPrice = BigDecimal.TWO;
+        filter.maxPrice = BigDecimal.TEN;
+
+        List<Product> products = database.getAll(filter);
+
+        assertThat(products)
+                .hasSize(2)
+                .extracting(Product::getName)
+                .containsExactlyInAnyOrder("product2", "product3");
+    }
+
+    @Test
+    void shouldReturnLimitedNumberOfProducts() {
+        Filter filter = new Filter();
+        filter.limit = 2;
+
+        List<Product> products = database.getAll(filter);
+
+        assertThat(products).hasSize(2);
+    }
+
+    @Test
+    void shouldReturnProductsWithOffset() {
+        Filter filter = new Filter();
+        filter.limit = 1;
+        filter.offset = 1;
+
+        List<Product> products = database.getAll(filter);
+
+        assertThat(products).hasSize(1);
+        assertThat(products.getFirst().getName()).isEqualTo("product2");
+    }
 }
