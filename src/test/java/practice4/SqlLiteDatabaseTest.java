@@ -21,9 +21,9 @@ class SqlLiteDatabaseTest {
     void setup() {
         database = new SqlLiteDatabaseImpl(":memory:"); // in-memory tests
 
-        database.create(new Product("product1", "category1", 1, BigDecimal.ONE));
-        database.create(new Product("product2", "category2", 2, BigDecimal.TWO));
-        database.create(new Product("product3", "category3", 3, BigDecimal.valueOf(3)));
+        database.create(new Product("product1", 1, 1, BigDecimal.ONE));
+        database.create(new Product("product2", 2, 2, BigDecimal.TWO));
+        database.create(new Product("product3", 3, 3, BigDecimal.valueOf(3)));
     }
 
     @AfterEach
@@ -43,7 +43,7 @@ class SqlLiteDatabaseTest {
     void shouldIncreaseCountAfterCreation() {
         int countBefore = database.count();
 
-        database.create(new Product("test4", "test4", 4, BigDecimal.valueOf(4)));
+        database.create(new Product("test4", 4, 4, BigDecimal.valueOf(4)));
 
         assertThat(database.count())
                 .isEqualTo(countBefore + 1);
@@ -51,12 +51,12 @@ class SqlLiteDatabaseTest {
 
     @Test
     void shouldGetProductById() {
-        int id = database.create(new Product("test4", "test4", 4, BigDecimal.valueOf(4)));
+        int id = database.create(new Product("test4", 4, 4, BigDecimal.valueOf(4)));
 
         assertThat(database.getById(id))
                 .isPresent()
                 .get()
-                .isEqualTo(new Product(id, "test4", "test4", 4, BigDecimal.valueOf(4)));
+                .isEqualTo(new Product(id, "test4", 4, 4, BigDecimal.valueOf(4)));
     }
 
     @Test
@@ -79,12 +79,14 @@ class SqlLiteDatabaseTest {
     @Test
     void shouldFilterProductsByCategory() {
         Filter filter = new Filter();
-        filter.category = "category2";
+        filter.categoryIds = List.of(1, 2);
 
         List<Product> products = database.getAll(filter);
 
-        assertThat(products).hasSize(1);
-        assertThat(products.getFirst().getName()).isEqualTo("product2");
+        assertThat(products).hasSize(2);
+        assertThat(products)
+                .extracting(Product::getName)
+                .containsExactlyInAnyOrder("product1", "product2");
     }
 
     @Test
@@ -92,7 +94,7 @@ class SqlLiteDatabaseTest {
         int id = 1;
         Product updatedProduct = new Product(id,
                 "newName",
-                "newCategory",
+                5,
                 4,
                 BigDecimal.valueOf(4));
 
@@ -107,7 +109,7 @@ class SqlLiteDatabaseTest {
 
     @Test
     void shouldThrowExceptionWhenUpdatingNonExistentProduct() {
-        Product nonExistentProduct = new Product(10, "product10", "category10", 10, BigDecimal.TEN);
+        Product nonExistentProduct = new Product(10, "product10", 10, 10, BigDecimal.TEN);
 
         assertThatThrownBy(() -> database.update(nonExistentProduct))
                 .isInstanceOf(RuntimeException.class)

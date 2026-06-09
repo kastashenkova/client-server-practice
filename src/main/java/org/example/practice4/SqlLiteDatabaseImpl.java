@@ -32,10 +32,10 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
     @Override
     public int create(Product product) {
         try (PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO product(name, category, quantity, price) values (?, ?, ?, ?)",
+                "INSERT INTO product(name, categoryId, quantity, price) values (?, ?, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, product.getName());
-            ps.setString(2, product.getCategory());
+            ps.setInt(2, product.getCategoryId());
             ps.setInt(3, product.getQuantity());
             ps.setBigDecimal(4, product.getPrice());
 
@@ -73,6 +73,9 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
 
     @Override
     public List<Product> getAll(Filter filter) {
+        if (filter == null) {
+            filter = new Filter();
+        }
         SqlWrapper wrapper = filterBuilder(filter);
         try (PreparedStatement ps = connection.prepareStatement(wrapper.sql)) {
             for (int i = 0; i < wrapper.params.size(); i++) {
@@ -84,7 +87,7 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
                     products.add(new Product(
                             rs.getInt("id"),
                             rs.getString("name"),
-                            rs.getString("category"),
+                            rs.getInt("categoryId"),
                             rs.getInt("quantity"),
                             rs.getBigDecimal("price")));
                 }
@@ -106,7 +109,7 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
                     return Optional.of(new Product(
                             rs.getInt("id"),
                             rs.getString("name"),
-                            rs.getString("category"),
+                            rs.getInt("categoryId"),
                             rs.getInt("quantity"),
                             rs.getBigDecimal("price")));
                 }
@@ -122,11 +125,11 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
     public int update(Product product) {
         try (PreparedStatement ps = connection.prepareStatement("""
                 UPDATE product
-                SET name = ?, category = ?, quantity = ?, price = ?
+                SET name = ?, categoryId = ?, quantity = ?, price = ?
                 WHERE id = ?
                 """)) {
             ps.setString(1, product.getName());
-            ps.setString(2, product.getCategory());
+            ps.setInt(2, product.getCategoryId());
             ps.setInt(3, product.getQuantity());
             ps.setBigDecimal(4, product.getPrice());
             ps.setInt(5, product.getId());
@@ -176,7 +179,7 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
                 CREATE TABLE IF NOT EXISTS product (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name VARCHAR(30) NOT NULL,
-                    category VARCHAR(30) NOT NULL,
+                    categoryId INTEGER NOT NULL,
                     quantity INT NOT NULL,
                     price DECIMAL(10,2) NOT NULL
                 )
@@ -203,7 +206,7 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
 
         String str = Stream.of(
                         stringEquals("name", filter.name, wrapper.params),
-                        stringEquals("category", filter.category, wrapper.params),
+                        in("categoryId", filter.categoryIds, wrapper.params),
                         numberGreaterOrEqual("quantity", filter.minQuantity, wrapper.params),
                         numberLessOrEqual("quantity", filter.maxQuantity, wrapper.params),
                         numberGreaterOrEqual("price", filter.minPrice, wrapper.params),
@@ -217,14 +220,13 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
             builder.append(str);
         }
 
-        if (filter.limit != null) {
+        if (filter.limit != null && filter.offset != null) {
+            builder.append(" LIMIT ? OFFSET ?");
+            wrapper.params.add(filter.limit);
+            wrapper.params.add(filter.offset);
+        } else if (filter.limit != null) {
             builder.append(" LIMIT ?");
             wrapper.params.add(filter.limit);
-
-            if (filter.offset != null) {
-                builder.append(" OFFSET ?");
-                wrapper.params.add(filter.offset);
-            }
         }
 
         wrapper.sql = builder.toString();
@@ -255,12 +257,14 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
         return columnName + " <= ?";
     }
 
-//    private String stringIn(String columnName, List<Object> values, List<Object> params) {
-//        if (values == null || values.isEmpty()) {
-//            return null;
-//        }
-//        params.addAll(values);
-//        return columnName + " IN(" + values.stream().map(i -> "?").collect(Collectors.joining(",")) + ")";
-//    }
+    private String in(String columnName, List<?> values, List<Object> params) {
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+        params.addAll(values);
+        return columnName + " IN("
+                + values.stream()
+                .map(i -> "?")
+                .collect(Collectors.joining(",")) + ")";
+    }
 }
-

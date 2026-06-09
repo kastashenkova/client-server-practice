@@ -6,18 +6,18 @@ import java.util.Objects;
 public class Product {
     private Integer id;
     private String name;
-    private String category;
+    private int categoryId;
     private int quantity;
     private BigDecimal price;
 
-    public Product(String name, String category, int quantity, BigDecimal price) {
-        this(null, name, category, quantity, price);
+    public Product(String name, int categoryId, int quantity, BigDecimal price) {
+        this(null, name, categoryId, quantity, price);
     }
 
-    public Product(Integer id, String name, String category, int quantity, BigDecimal price) {
+    public Product(Integer id, String name, int categoryId, int quantity, BigDecimal price) {
         this.id = id;
         this.name = name;
-        this.category = category;
+        this.categoryId = categoryId;
         this.quantity = quantity;
         this.price = price;
     }
@@ -38,12 +38,12 @@ public class Product {
         this.name = name;
     }
 
-    public String getCategory() {
-        return category;
+    public int getCategoryId() {
+        return categoryId;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public void setCategoryId(int categoryId) {
+        this.categoryId = categoryId;
     }
 
     public int getQuantity() {
@@ -75,7 +75,7 @@ public class Product {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, category, quantity, price);
+        return Objects.hash(id, name, categoryId, quantity, price);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class Product {
         return "Product{"
                 + "id=" + id
                 + ", name='" + name
-                + '\'' + ", category='" + category + '\''
+                + ", categoryId='" + categoryId
                 + ", quantity=" + quantity
                 + ", price=" + price + '}';
     }
