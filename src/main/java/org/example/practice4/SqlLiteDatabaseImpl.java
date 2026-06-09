@@ -176,6 +176,13 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
     private void init() {
         try (Statement statement = connection.createStatement()) {
             statement.execute("""
+            CREATE TABLE IF NOT EXISTS category (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name VARCHAR(30) UNIQUE NOT NULL
+            )
+            """);
+
+            statement.execute("""
                 CREATE TABLE IF NOT EXISTS product (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name VARCHAR(30) NOT NULL,
@@ -197,6 +204,51 @@ public class SqlLiteDatabaseImpl implements Database, AutoCloseable {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Can't close connection", e);
+        }
+    }
+
+    // helpers
+    public Optional<Product> getProductByName(String name) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product WHERE name = ?")) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(new Product(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getInt("categoryId"),
+                            rs.getInt("quantity"),
+                            rs.getBigDecimal("price")));
+                }
+            }
+            return Optional.empty();
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't get product by name: " + name, e);
+        }
+    }
+
+    public int getOrCreateCategory(String name) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT id FROM category WHERE name = ?")) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error checking category", e);
+        }
+
+        try (PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO category(name) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, name);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) return keys.getInt(1);
+            }
+            throw new RuntimeException("Failed to obtain id for category");
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't create category: " + name, e);
         }
     }
 

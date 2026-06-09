@@ -30,7 +30,7 @@ class MultithreadMessageSendingTest {
 
     @BeforeEach
     void setUp() {
-        scaling = new Scaling(2, 2, 4, 3, 5);
+        scaling = new Scaling(0, 2, 4, 3, 5);
         scaling.start();
     }
 
@@ -44,29 +44,30 @@ class MultithreadMessageSendingTest {
         WarehouseService warehouse = scaling.getWarehouseService();
         int threadCount = 20;
         int addPerThread = 10;
+        String product = "test_rice_" + System.nanoTime();
 
         ExecutorService pool = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
 
         for (int i = 0; i < threadCount; i++) {
             pool.submit(() -> {
-                warehouse.addProducts("rice", addPerThread);
+                warehouse.addProducts(product, addPerThread);
                 latch.countDown();
             });
         }
 
         pool.shutdown();
-
         pool.awaitTermination(5, TimeUnit.SECONDS);
         latch.await(5, TimeUnit.SECONDS);
 
-        assertEquals(threadCount * addPerThread, warehouse.getStock("rice"));
+        assertEquals(threadCount * addPerThread, warehouse.getStock(product));
     }
 
     @Test
     void concurrentDeductStock_shouldNotGoNegative() throws Exception {
         WarehouseService warehouse = scaling.getWarehouseService();
-        warehouse.addProducts("buckwheat", 50);
+        String product = "test_buckwheat_" + System.nanoTime();
+        warehouse.addProducts(product, 50);
 
         int threadCount = 30;
         ExecutorService pool = Executors.newFixedThreadPool(threadCount);
@@ -74,7 +75,7 @@ class MultithreadMessageSendingTest {
 
         for (int i = 0; i < threadCount; i++) {
             pool.submit(() -> {
-                warehouse.deductProducts("buckwheat", 5);
+                warehouse.deductProducts(product, 5);
                 latch.countDown();
             });
         }
@@ -83,14 +84,14 @@ class MultithreadMessageSendingTest {
         pool.shutdown();
         pool.awaitTermination(5, TimeUnit.SECONDS);
 
-        assertTrue(warehouse.getStock("buckwheat") >= 0,
-                "Stock must never be negative");
+        assertTrue(warehouse.getStock(product) >= 0, "Stock must never be negative");
     }
 
     @Test
     void fullPipeline_concurrentMessages_processedWithoutErrors() throws Exception {
         Encrypter encrypter = new Encrypter(new MessageCipher());
         SharedQueue<byte[]> rawQueue = scaling.getRawQueue();
+        String product = "test_pasta_" + System.nanoTime();
 
         int threadCount = 10;
         int messagesPerThread = 5;
@@ -104,7 +105,7 @@ class MultithreadMessageSendingTest {
                             (byte) 0x01, System.nanoTime(),
                             3,
                             1,
-                            "pasta:10");
+                            product + ":10");
                     try {
                         rawQueue.produce(encrypter.encrypt(msg));
                     } catch (InterruptedException e) {
@@ -126,22 +127,22 @@ class MultithreadMessageSendingTest {
         int maxRetries = 100; // 5 sec
 
         while (maxRetries > 0) {
-            current = warehouse.getStock("pasta");
+            current = warehouse.getStock(product);
             if (current == expected) {
                 break;
             }
             Thread.sleep(50);
             maxRetries--;
         }
-        assertEquals(expected, warehouse.getStock("pasta"),
+        assertEquals(expected, warehouse.getStock(product),
                 "All ADD_PRODUCTS commands must be processed exactly once");
     }
 
-    // race condition test
     @Test
     void concurrentAddAndDeduct_stockRemainsConsistent() throws Exception {
         WarehouseService warehouse = scaling.getWarehouseService();
-        warehouse.addProducts("oats", 1000);
+        String product = "test_oats_" + System.nanoTime();
+        warehouse.addProducts(product, 1000);
 
         int threadCount = 50;
         AtomicInteger netChange = new AtomicInteger(0);
@@ -152,10 +153,10 @@ class MultithreadMessageSendingTest {
             boolean add = (i % 2 == 0);
             pool.submit(() -> {
                 if (add) {
-                    warehouse.addProducts("oats", 5);
+                    warehouse.addProducts(product, 5);
                     netChange.addAndGet(5);
                 } else {
-                    warehouse.deductProducts("oats", 3);
+                    warehouse.deductProducts(product, 3);
                     netChange.addAndGet(-3);
                 }
                 latch.countDown();
@@ -166,7 +167,7 @@ class MultithreadMessageSendingTest {
         pool.shutdown();
 
         int expected = Math.max(0, 1000 + netChange.get());
-        assertEquals(expected, warehouse.getStock("oats"));
+        assertEquals(expected, warehouse.getStock(product));
     }
 
     @Test
@@ -183,8 +184,8 @@ class MultithreadMessageSendingTest {
         try {
             senderThread.start();
 
-            sendQueue.produce(new byte[]{1, 2, 3}); // 3 bytes
-            sendQueue.produce(new byte[]{4, 5, 6, 7, 8}); // 5 bytes
+            sendQueue.produce(new byte[]{1, 2, 3});
+            sendQueue.produce(new byte[]{4, 5, 6, 7, 8});
 
             int maxRetries = 40;
             while (maxRetries > 0) {

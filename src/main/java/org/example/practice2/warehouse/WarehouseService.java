@@ -1,45 +1,85 @@
 package org.example.practice2.warehouse;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.math.BigDecimal;
+import java.util.Optional;
+import org.example.practice4.Product;
+import org.example.practice4.SqlLiteDatabaseImpl;
 
 public class WarehouseService {
-    private final ConcurrentHashMap<String, Integer> quantities = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Double> prices = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Set<String>> groups = new ConcurrentHashMap<>();
+    private final SqlLiteDatabaseImpl database;
+    private final int defaultCategoryId;
 
-    public int getStock(String product) {
-        return quantities.getOrDefault(product, 0);
+    public WarehouseService(SqlLiteDatabaseImpl database) {
+        this.database = database;
+        this.defaultCategoryId = database.getOrCreateCategory("Default");
     }
 
-    public int addProducts(String product, int quantity) {
-        int current = quantities.getOrDefault(product, 0);
-        int updated = current + quantity;
-        quantities.put(product, updated);
-        return updated;
+    public synchronized int getStock(String productName) {
+        return database.getProductByName(productName)
+                .map(Product::getQuantity)
+                .orElse(0);
     }
 
-    public int deductProducts(String product, int quantityToDeduct) {
-        int current = quantities.getOrDefault(product, 0);
-        int updated = Math.max(0, current - quantityToDeduct);
-        quantities.put(product, updated);
-        return updated;
+    public synchronized int addProducts(String productName, int quantity) {
+        Optional<Product> optProduct = database.getProductByName(productName);
+        if (optProduct.isPresent()) {
+            Product p = optProduct.get();
+            p.setQuantity(p.getQuantity() + quantity);
+            database.update(p);
+            return p.getQuantity();
+        } else {
+            Product p = new Product(productName, defaultCategoryId, quantity, BigDecimal.ZERO);
+            database.create(p);
+            return quantity;
+        }
     }
 
-    public void addGroup(String groupName) {
-        groups.putIfAbsent(groupName, ConcurrentHashMap.newKeySet());
+    public synchronized int deductProducts(String productName, int quantityToDeduct) {
+        Optional<Product> optProduct = database.getProductByName(productName);
+        if (optProduct.isPresent()) {
+            Product p = optProduct.get();
+            int updated = Math.max(0, p.getQuantity() - quantityToDeduct);
+            p.setQuantity(updated);
+            database.update(p);
+            return updated;
+        }
+        return 0;
     }
 
-    public void addProductToGroup(String groupName, String product) {
-        groups.computeIfAbsent(groupName, k -> ConcurrentHashMap.newKeySet())
-                .add(product);
+    public synchronized void addGroup(String groupName) {
+        database.getOrCreateCategory(groupName);
     }
 
-    public void setPrice(String product, double price) {
-        prices.put(product, price);
+    public synchronized void addProductToGroup(String groupName, String productName) {
+        int categoryId = database.getOrCreateCategory(groupName);
+        Optional<Product> optProduct = database.getProductByName(productName);
+
+        if (optProduct.isPresent()) {
+            Product p = optProduct.get();
+            p.setCategoryId(categoryId);
+            database.update(p);
+        } else {
+            Product p = new Product(productName, categoryId, 0, BigDecimal.ZERO);
+            database.create(p);
+        }
     }
 
-    public Double getPrice(String product) {
-        return prices.get(product);
+    public synchronized void setPrice(String productName, double price) {
+        Optional<Product> optProduct = database.getProductByName(productName);
+        if (optProduct.isPresent()) {
+            Product p = optProduct.get();
+            p.setPrice(BigDecimal.valueOf(price));
+            database.update(p);
+        } else {
+            Product p = new Product(productName, defaultCategoryId, 0, BigDecimal.valueOf(price));
+            database.create(p);
+        }
+    }
+
+    public synchronized BigDecimal getPrice(String productName) {
+        return BigDecimal.valueOf(
+                database.getProductByName(productName)
+                .map(p -> p.getPrice().doubleValue())
+                .orElse(0.0));
     }
 }

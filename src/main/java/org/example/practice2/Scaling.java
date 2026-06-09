@@ -16,6 +16,7 @@ import org.example.practice2.sender.Sender;
 import org.example.practice2.sender.SenderImpl;
 import org.example.practice2.warehouse.WarehouseService;
 import org.example.practice3.SocketWrapper;
+import org.example.practice4.SqlLiteDatabaseImpl;
 
 public class Scaling {
 
@@ -23,8 +24,8 @@ public class Scaling {
     private final SharedQueue<Message> messageQueue = new SharedQueue<>();
     private final SharedQueue<Message> responseQueue = new SharedQueue<>();
     private final SharedQueue<byte[]> sendQueue = new SharedQueue<>();
-
-    private final WarehouseService warehouseService = new WarehouseService();
+    private final SqlLiteDatabaseImpl database = new SqlLiteDatabaseImpl("warehouse.db");
+    private final WarehouseService warehouseService = new WarehouseService(database);
     private final ExecutorService executor;
     private final List<Receiver> receivers = new ArrayList<>();
     private final List<Decriptor> decriptors = new ArrayList<>();
@@ -38,8 +39,7 @@ public class Scaling {
                    int encriptorCount,
                    int senderCount) {
 
-        int total = receiverCount + decriptorCount + processorCount + encriptorCount + senderCount;
-        this.executor = Executors.newFixedThreadPool(total);
+        this.executor = Executors.newCachedThreadPool();
 
         for (int i = 0; i < receiverCount; i++) {
             receivers.add(new ReceiverImpl(rawQueue));

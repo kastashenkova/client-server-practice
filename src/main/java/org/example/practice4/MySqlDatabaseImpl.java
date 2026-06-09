@@ -174,6 +174,13 @@ public class MySqlDatabaseImpl implements Database, AutoCloseable {
     private void init() {
         try (Statement statement = connection.createStatement()) {
             statement.execute("""
+            CREATE TABLE IF NOT EXISTS category (
+                id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                name VARCHAR(30) UNIQUE NOT NULL
+            )
+            """);
+
+            statement.execute("""
                 CREATE TABLE IF NOT EXISTS product (
                     id INTEGER PRIMARY KEY AUTO_INCREMENT,
                     name VARCHAR(30) NOT NULL,
