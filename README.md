@@ -35,6 +35,6 @@ Product operations implementation:
 - count
   
 ### Test coverage
-<img width="434" height="88" alt="image" src="https://github.com/user-attachments/assets/d9f248bb-9b49-4dc7-9009-0a439eb6e72c" />
+<img width="432" height="83" alt="image" src="https://github.com/user-attachments/assets/f91b7363-e5c9-4d78-84a7-c913be15e936" />
 
 > made with [Jacoco](https://www.eclemma.org/jacoco/)
