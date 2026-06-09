@@ -175,4 +175,43 @@ class MySqlDatabaseTest extends BaseMySqlTest {
         assertThat(products).hasSize(1);
         assertThat(products.getFirst().getName()).isEqualTo("product2");
     }
+
+    @Test
+    void shouldFilterProductsByMultipleConditionsCombined() {
+        Filter filter = new Filter();
+        filter.categoryIds = List.of(2, 3);
+        filter.minPrice = BigDecimal.valueOf(2.5);
+        filter.limit = 10;
+
+        List<Product> products = database.getAll(filter);
+
+        assertThat(products).hasSize(1);
+        assertThat(products.getFirst().getName()).isEqualTo("product3");
+    }
+
+    @Test
+    void shouldReturnAllProductsWhenFilterHasAllNullFields() {
+        Filter filter = new Filter();
+
+        List<Product> products = database.getAll(filter);
+
+        assertThat(products).hasSize(3);
+    }
+
+    @Test
+    void shouldReturnAllProductsWhenFilterIsNull() {
+        List<Product> products = database.getAll(null);
+
+        assertThat(products).hasSize(3);
+    }
+
+    @Test
+    void shouldIgnoreOffsetIfLimitIsNotSet() {
+        Filter filter = new Filter();
+        filter.offset = 1;
+
+        List<Product> products = database.getAll(filter);
+
+        assertThat(products).hasSize(3);
+    }
 }

@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
+
 import org.example.practice4.Database;
 import org.example.practice4.Filter;
 import org.example.practice4.SqlLiteDatabaseImpl;
@@ -181,5 +183,77 @@ class SqlLiteDatabaseTest {
 
         assertThat(products).hasSize(1);
         assertThat(products.getFirst().getName()).isEqualTo("product2");
+    }
+
+    @Test
+    void shouldFilterProductsByMultipleConditionsCombined() {
+        Filter filter = new Filter();
+        filter.categoryIds = List.of(2, 3);
+        filter.minPrice = BigDecimal.valueOf(2.5);
+        filter.limit = 10;
+
+        List<Product> products = database.getAll(filter);
+
+        assertThat(products).hasSize(1);
+        assertThat(products.getFirst().getName()).isEqualTo("product3");
+    }
+
+    @Test
+    void shouldReturnAllProductsWhenFilterHasAllNullFields() {
+        Filter filter = new Filter();
+
+        List<Product> products = database.getAll(filter);
+
+        assertThat(products).hasSize(3);
+    }
+
+    @Test
+    void shouldReturnAllProductsWhenFilterIsNull() {
+        List<Product> products = database.getAll(null);
+
+        assertThat(products).hasSize(3);
+    }
+
+    @Test
+    void shouldIgnoreOffsetIfLimitIsNotSet() {
+        Filter filter = new Filter();
+        filter.offset = 1;
+
+        List<Product> products = database.getAll(filter);
+
+        assertThat(products).hasSize(3);
+    }
+
+    @Test
+    void shouldReturnProductByNameWhenItExists() {
+        SqlLiteDatabaseImpl dbImpl = (SqlLiteDatabaseImpl) database;
+        Optional<Product> foundProduct = dbImpl.getProductByName("product1");
+        assertThat(foundProduct).isPresent();
+        assertThat(foundProduct.get().getName()).isEqualTo("product1");
+        assertThat(foundProduct.get().getPrice()).isEqualByComparingTo(BigDecimal.ONE);
+    }
+
+    @Test
+    void shouldReturnEmptyOptionalWhenProductByNameDoesNotExist() {
+        SqlLiteDatabaseImpl dbImpl = (SqlLiteDatabaseImpl) database;
+        Optional<Product> foundProduct = dbImpl.getProductByName("nonExistentProduct");
+        assertThat(foundProduct).isEmpty();
+    }
+
+    @Test
+    void shouldCreateNewCategoryAndReturnIdWhenItDoesNotExist() {
+        SqlLiteDatabaseImpl dbImpl = (SqlLiteDatabaseImpl) database;
+        String newCategoryName = "Electronics";
+        int categoryId = dbImpl.getOrCreateCategory(newCategoryName);
+        assertThat(categoryId).isGreaterThan(0);
+    }
+
+    @Test
+    void shouldReturnExistingCategoryIdWhenCategoryAlreadyExists() {
+        SqlLiteDatabaseImpl dbImpl = (SqlLiteDatabaseImpl) database;
+        String categoryName = "Groceries";
+        int firstCallId = dbImpl.getOrCreateCategory(categoryName);
+        int secondCallId = dbImpl.getOrCreateCategory(categoryName);
+        assertThat(firstCallId).isEqualTo(secondCallId);
     }
 }
