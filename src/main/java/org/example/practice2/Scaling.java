@@ -111,4 +111,8 @@ public class Scaling {
     public WarehouseService getWarehouseService() {
         return warehouseService;
     }
+
+    public SharedQueue<byte[]> getSendQueue() {
+        return sendQueue;
+    }
 }

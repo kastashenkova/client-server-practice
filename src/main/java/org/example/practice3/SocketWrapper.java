@@ -38,7 +38,6 @@ public class SocketWrapper {
                     byte[] data = new byte[length];
                     input.readFully(data);
                     outputQueue.produce(data);
-                    sendAck();
                 } catch (EOFException e) {
                     System.out.println("Connection closed by the remote host.");
                     break;
@@ -55,11 +54,6 @@ public class SocketWrapper {
         } finally {
             close();
         }
-    }
-
-    public synchronized void sendAck() throws IOException {
-        output.writeUTF("ACK");
-        output.flush();
     }
 
     public void close() {

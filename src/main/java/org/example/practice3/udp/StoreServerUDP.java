@@ -2,48 +2,63 @@ package org.example.practice3.udp;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketAddress;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import org.example.practice2.Scaling;
 
 public class StoreServerUDP {
-
     private static final int PORT = 8081;
 
     public static void main(String[] args) {
+        Scaling pipeline = new Scaling(0, 1, 1, 1, 0);
+        pipeline.start();
 
-        try (DatagramSocket socket =
-                     new DatagramSocket(PORT)) {
+        Set<SocketAddress> activeClients = ConcurrentHashMap.newKeySet();
 
-            System.out.println(
-                    "UDP server started on port "
-                            + PORT
-            );
+        try (DatagramSocket socket = new DatagramSocket(PORT)) {
+            System.out.println("UDP server started on port " + PORT);
+
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        byte[] responseData = pipeline.getSendQueue().consume();
+                        for (SocketAddress client : activeClients) {
+                            try {
+                                DatagramPacket respPacket = new DatagramPacket(
+                                        responseData, responseData.length, client);
+                                socket.send(respPacket);
+                            } catch (Exception e) {
+                                System.err.println("Failed to send UDP response: " + e.getMessage());
+                            }
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
 
             while (true) {
                 byte[] buffer = new byte[65507];
-                DatagramPacket packet =
-                        new DatagramPacket(
-                                buffer,
-                                buffer.length
-                        );
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
-                System.out.println(
-                        "UDP server received package: "
-                                + packet.getLength()
-                                + " bytes"
-                );
-                byte[] ack = "ACK_UDP".getBytes();
-                DatagramPacket ackPacket =
-                        new DatagramPacket(
-                                ack,
-                                ack.length,
-                                packet.getAddress(),
-                                packet.getPort()
-                        );
 
+                SocketAddress clientAddress = packet.getSocketAddress();
+                activeClients.add(clientAddress);
+
+                System.out.println("UDP server received package: " + packet.getLength() + " bytes");
+
+                byte[] ack = "ACK_UDP".getBytes();
+                DatagramPacket ackPacket = new DatagramPacket(ack, ack.length, clientAddress);
                 socket.send(ackPacket);
+
+                byte[] actualData = new byte[packet.getLength()];
+                System.arraycopy(packet.getData(), 0, actualData, 0, packet.getLength());
+                pipeline.getRawQueue().produce(actualData);
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Error occurred while trying to send UDP packet", e);
+            throw new RuntimeException("Error occurred while processing UDP packets", e);
         }
     }
 }

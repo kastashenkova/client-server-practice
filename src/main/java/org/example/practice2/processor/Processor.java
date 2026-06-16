@@ -68,7 +68,7 @@ public class Processor implements Runnable {
                     String product = command.params()[0];
                     int quantity = Integer.parseInt(command.params()[1]);
                     int remainder = warehouseService.deductProducts(product, quantity);
-                    yield CommandResult.success("Deducted " + quantity + " of " + product + ", remainder =" + remainder);
+                    yield CommandResult.success("Deducted " + quantity + " of " + product + ", remainder = " + remainder);
                 }
                 case ADD_GROUP -> {
                     warehouseService.addGroup(command.params()[0]);
@@ -119,7 +119,8 @@ public class Processor implements Runnable {
                 }
             };
         } catch (Exception e) {
-            return CommandResult.error("Command failed: " + command);
+            String errorDetails = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            return CommandResult.error("Command failed: " + command.type() + " | Error: " + errorDetails);
         }
     }
 
