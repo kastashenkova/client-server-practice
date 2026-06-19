@@ -48,8 +48,6 @@ Added endpoints:
 - `DELETE /products/{id}`
 
 ### Test coverage
+<img width="1081" height="232" alt="image" src="https://github.com/user-attachments/assets/ad3bace2-6744-4204-a237-53389f262b84" />
 
 > made with [Jacoco](https://www.eclemma.org/jacoco/)
-
-
-> made with [Snyk](https://app.snyk.io/)
