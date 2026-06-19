@@ -57,8 +57,8 @@ public class MessageCipher {
         try (BufferedReader reader = new BufferedReader(new FileReader(".env"))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.startsWith("SECRET_KEY=")) {
-                    key = line.substring("SECRET_KEY=".length()).trim();
+                if (line.startsWith("MESSAGE_SECRET_KEY=")) {
+                    key = line.substring("MESSAGE_SECRET_KEY=".length()).trim();
                     break;
                 }
             }

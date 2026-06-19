@@ -10,7 +10,7 @@
 ### Configuration
 1. Clone repository
 2. Copy `.env_sample` file into your `.env` and configure it in order to set up environment variable for secure message encryption.
-   > Mind: the length of your `SECRET_KEY` must be 16, 32 or 64 chars long
+   > Mind: the length of your `MESSAGE_SECRET_KEY` must be 16, 32 or 64 chars long
 3. Test classes with special system tests
 
 ## 📌 Practice 2. Multithreading

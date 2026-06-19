@@ -70,6 +70,42 @@ public class MySqlDatabaseImpl implements Database, AutoCloseable {
     }
 
     @Override
+    public Optional<Product> getProductByName(String name) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product WHERE name = ?")) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(new Product(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getInt("categoryId"),
+                            rs.getInt("quantity"),
+                            rs.getBigDecimal("price")));
+                }
+            }
+            return Optional.empty();
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't get product by name: " + name, e);
+        }
+    }
+
+    @Override
+    public void createCategory(Category category) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO category(name) values (?)",
+                Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, category.name());
+
+            int inserted = ps.executeUpdate();
+            if (inserted < 1) {
+                throw new RuntimeException("Failed to create category: " + category.name());
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't create category: " + category, e);
+        }
+    }
+
+    @Override
     public List<Product> getAll(Filter filter) {
         if (filter == null) {
             filter = new Filter();
@@ -171,6 +207,25 @@ public class MySqlDatabaseImpl implements Database, AutoCloseable {
         }
     }
 
+    @Override
+    public Optional<Category> getCategoryById(int id) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM category WHERE id = ?")) {
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(new Category(
+                            rs.getInt("id"),
+                            rs.getString("name")));
+                }
+            }
+
+            return Optional.empty();
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't get category by id: " + id, e);
+        }
+    }
+
     private void init() {
         try (Statement statement = connection.createStatement()) {
             statement.execute("""
@@ -184,7 +239,7 @@ public class MySqlDatabaseImpl implements Database, AutoCloseable {
                 CREATE TABLE IF NOT EXISTS product (
                     id INTEGER PRIMARY KEY AUTO_INCREMENT,
                     name VARCHAR(30) NOT NULL,
-                    categoryId INTEGER NOT NULL,
+                    categoryId INTEGER NOT NULL REFERENCES category(id),
                     quantity INT NOT NULL,
                     price DECIMAL(10,2) NOT NULL
                 )

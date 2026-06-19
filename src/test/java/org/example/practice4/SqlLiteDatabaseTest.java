@@ -1,4 +1,4 @@
-package practice4;
+package org.example.practice4;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,6 +22,12 @@ class SqlLiteDatabaseTest {
     @BeforeEach
     void setup() {
         database = new SqlLiteDatabaseImpl(":memory:"); // in-memory tests
+
+        database.createCategory(new Category(1, "category1"));
+        database.createCategory(new Category(2, "category2"));
+        database.createCategory(new Category(3, "category3"));
+        database.createCategory(new Category(4, "category4"));
+        database.createCategory(new Category(5, "category5"));
 
         database.create(new Product("product1", 1, 1, BigDecimal.ONE));
         database.create(new Product("product2", 2, 2, BigDecimal.TWO));

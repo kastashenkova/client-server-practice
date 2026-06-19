@@ -96,4 +96,8 @@ public class WarehouseService {
     public synchronized List<Product> searchProducts(Filter filter) {
         return database.getAll(filter);
     }
+
+    public SqlLiteDatabaseImpl getDatabase() {
+        return this.database;
+    }
 }

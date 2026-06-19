@@ -1,14 +1,11 @@
-package practice4;
+package org.example.practice4;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.util.List;
-import org.example.practice4.Database;
-import org.example.practice4.Filter;
-import org.example.practice4.MySqlDatabaseImpl;
-import org.example.practice4.Product;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

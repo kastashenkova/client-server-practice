@@ -10,6 +10,9 @@ public class Product {
     private int quantity;
     private BigDecimal price;
 
+    public Product() {
+    }
+
     public Product(String name, int categoryId, int quantity, BigDecimal price) {
         this(null, name, categoryId, quantity, price);
     }

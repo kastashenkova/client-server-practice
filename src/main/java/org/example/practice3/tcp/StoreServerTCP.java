@@ -7,15 +7,17 @@ import org.example.practice2.Scaling;
 import org.example.practice3.SocketWrapper;
 
 public class StoreServerTCP {
-    private static final int PORT = 8080;
+    private final int port;
+    private final Scaling pipeline;
 
-    public static void main(String[] args) {
+    public StoreServerTCP(int port, Scaling pipeline) {
+        this.port = port;
+        this.pipeline = pipeline;
+    }
 
-        Scaling pipeline = new Scaling(0, 1, 1, 1, 0);
-        pipeline.start();
-
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("TCP server started on port " + PORT);
+    public void start() {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("TCP server started on port " + port);
 
             while (true) {
                 try {
@@ -35,7 +37,6 @@ public class StoreServerTCP {
                     System.err.println("Connection error: " + e.getMessage());
                 }
             }
-
         } catch (IOException e) {
             throw new RuntimeException("Error occurred in TCP server", e);
         }

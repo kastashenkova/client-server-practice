@@ -17,4 +17,10 @@ public interface Database {
     int deleteById(int id);
 
     int count();
+
+    Optional<Product> getProductByName(String name);
+
+    void createCategory(Category category);
+
+    Optional<Category> getCategoryById(int id);
 }

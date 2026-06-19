@@ -8,16 +8,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.example.practice2.Scaling;
 
 public class StoreServerUDP {
-    private static final int PORT = 8081;
+    private final int port;
+    private final Scaling pipeline;
 
-    public static void main(String[] args) {
-        Scaling pipeline = new Scaling(0, 1, 1, 1, 0);
-        pipeline.start();
+    public StoreServerUDP(int port, Scaling pipeline) {
+        this.port = port;
+        this.pipeline = pipeline;
+    }
 
+    public void start() {
         Set<SocketAddress> activeClients = ConcurrentHashMap.newKeySet();
 
-        try (DatagramSocket socket = new DatagramSocket(PORT)) {
-            System.out.println("UDP server started on port " + PORT);
+        try (DatagramSocket socket = new DatagramSocket(port)) {
+            System.out.println("UDP server started on port " + port);
 
             new Thread(() -> {
                 try {
@@ -46,8 +49,6 @@ public class StoreServerUDP {
                 SocketAddress clientAddress = packet.getSocketAddress();
                 activeClients.add(clientAddress);
 
-                System.out.println("UDP server received package: " + packet.getLength() + " bytes");
-
                 byte[] ack = "ACK_UDP".getBytes();
                 DatagramPacket ackPacket = new DatagramPacket(ack, ack.length, clientAddress);
                 socket.send(ackPacket);
@@ -56,7 +57,6 @@ public class StoreServerUDP {
                 System.arraycopy(packet.getData(), 0, actualData, 0, packet.getLength());
                 pipeline.getRawQueue().produce(actualData);
             }
-
         } catch (Exception e) {
             throw new RuntimeException("Error occurred while processing UDP packets", e);
         }

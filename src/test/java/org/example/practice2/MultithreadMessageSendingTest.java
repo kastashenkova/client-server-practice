@@ -1,4 +1,4 @@
-package practice2;
+package org.example.practice2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

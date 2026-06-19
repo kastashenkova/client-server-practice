@@ -1,4 +1,4 @@
-package practice4;
+package org.example.practice4;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
