@@ -38,3 +38,18 @@ Product operations implementation:
 <img width="431" height="84" alt="image" src="https://github.com/user-attachments/assets/7a49d458-28a8-4be5-a725-2ad5948a04a6" />
 
 > made with [Jacoco](https://www.eclemma.org/jacoco/)
+
+## 📌 Practice 5. HTTP Server
+Added endpoints:
+- `POST /login`
+- `GET /products/{id}`
+- `PUT /products`
+- `POST /products/{id}`
+- `DELETE /products/{id}`
+
+### Test coverage
+
+> made with [Jacoco](https://www.eclemma.org/jacoco/)
+
+
+> made with [Snyk](https://app.snyk.io/)
